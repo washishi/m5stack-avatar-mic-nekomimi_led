@@ -2,7 +2,7 @@
 # m5stack-avatar-mic-nekomimi
 [Nekomimi LED](https://github.com/washishi/nekomimi_led) のサンプルプログラムです  
 音に合わせてAvatarが口パクしたり、傾いたりすると共にNekomimi LEDが音量に応じて光ります  
-またボタンAを押すと画面の色が変わります、ダブルクリックすると上下が反転します  
+またボタンA(CoreS3は画面左)を押すと画面の色が変わります、長押しすると上下が反転します(再度長押しで戻ります) 
 なおｽﾀｯｸﾁｬﾝに入れてもサーボの制御はしていないためサーボは動きません  
 
 ※本プログラムは Takao Akaki (mongonta0716) さんの [m5stack-avatar-mic](https://github.com/mongonta0716/m5stack-avatar-mic) を改変したものです  
@@ -18,7 +18,7 @@ VSCode + PlatformIO
 ・M5Stack-Avatar@0.9.2  
 ・M5Unified@0.1.13  
 ・FastLED@3.6.0  
-・gob_unifiedButton (CoreS3のみ)
+・gob_unifiedButton@0.1.5
 
 # 対応デバイス
 
@@ -53,10 +53,15 @@ VSCode + PlatformIO
   - PDMマイクユニット を PortAに接続
   - Nekomimi LED は GND,+5V,G26 に何とかして接続してください
 
-- CoreS3 + DIN BASE もしくは M5GO3 Bottom
+- CoreS3 または CoreS3SE + DIN BASE もしくは M5GO3 Bottom
   - env:M5Stack_CoreS3 を選択
-  - マイクはCoreS3内蔵のマイクを利用します
+  - マイクはCoreS3内蔵のマイクを利用します(DUAL MIC対応)
   - Nekomimi LEDはPortBに接続(O端子を利用、G9)
+
+- CoreS3 または CoreS3SE  (PortAにNekomimi LEDを取り付け)
+  - env:M5Stack_CoreS3-LED_PortA を選択
+  - マイクはCoreS3SE内蔵のマイクを利用します(DUAL MIC対応)
+  - Nekomimi LEDはPortAに接続(DATA端子を利用、G2)
 
 - M5StickC または M5StickC Plus
   - env:M5StickC を選択

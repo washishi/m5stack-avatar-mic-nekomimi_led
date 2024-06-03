@@ -5,10 +5,7 @@
 #include <Avatar.h>
 #include "fft.hpp"
 #include <cinttypes>
-#if defined(ARDUINO_M5STACK_CORES3)
-  #include <gob_unifiedButton.hpp>
-  goblib::UnifiedButton unifiedButton;
-#endif
+#include <gob_unifiedButton.hpp>
 #define USE_MIC
 
 #define USE_FASTLED
@@ -105,26 +102,55 @@ uint8_t palette_index = 0;
 uint32_t last_rotation_msec = 0;
 uint32_t last_lipsync_max_msec = 0;
 uint8_t display_rotation = 1; // ディスプレイの向き(0〜3)
+bool rotation_flg = false;
 
 void lipsync() {
-  
+
   size_t bytesread;
-  uint64_t level = 0;
+  uint64_t level1= 0;
+  uint64_t level2= 0;
 #ifndef SDL_h_
-  if ( M5.Mic.record(rec_data, WAVE_SIZE, record_samplerate)) {
-    fft.exec(rec_data);
-    for (size_t bx=5;bx<=60;++bx) {
-      int32_t f = fft.get(bx);
-      level += abs(f);
+  switch (M5.getBoard()) {
+  case m5::board_t::board_M5StackCoreS3:
+  case m5::board_t::board_M5StackCoreS3SE:
+    if ( M5.Mic.record(rec_data, WAVE_SIZE, record_samplerate,true)) {
+      fft.exec(rec_data,1);
+      for (size_t bx=5;bx<=60;++bx) {
+        int32_t f = fft.get(bx);
+        level1 += abs(f);
+      }
+      fft.exec(rec_data,2);
+      for (size_t bx=5;bx<=60;++bx) {
+        int32_t f = fft.get(bx);
+        level2 += abs(f);
+      }
     }
+    break;
+  default:
+    if ( M5.Mic.record(rec_data, WAVE_SIZE, record_samplerate)) {
+      fft.exec(rec_data);
+      for (size_t bx=5;bx<=60;++bx) {
+        int32_t f = fft.get(bx);
+        level1 += abs(f);
+      }
+      level2=level1;
+    }
+    break;
   }
-  uint32_t temp_level = level >> lipsync_shift_level;
-  //M5_LOGI("level:%" PRId64 "\n", level) ;         // lipsync_maxを調整するときはこの行をコメントアウトしてください。
-  //M5_LOGI("temp_level:%d\n", temp_level) ;         // lipsync_maxを調整するときはこの行をコメントアウトしてください。
-  float ratio = (float)(temp_level / lipsync_max);
+  uint32_t temp_level1 = level1 >> lipsync_shift_level;
+  uint32_t temp_level2 = level2 >> lipsync_shift_level;
+  //M5_LOGI("level1:%" PRId64 "\n", level1) ;         // lipsync_maxを調整するときはこの行をコメントアウトしてください。
+  //M5_LOGI("level2:%" PRId64 "\n", level2) ;         // lipsync_maxを調整するときはこの行をコメントアウトしてください。
+  //M5_LOGI("temp_level1:%d\n", temp_level1) ;        // lipsync_maxを調整するときはこの行をコメントアウトしてください。
+  //M5_LOGI("temp_level2:%d\n", temp_level2) ;        // lipsync_maxを調整するときはこの行をコメントアウトしてください。
+  float ratio1 = (float)(temp_level1 / lipsync_max);
+  float ratio2 = (float)(temp_level2 / lipsync_max);
+  float ratio = (float)((ratio1+ratio2)/2);
   //M5_LOGI("ratio:%f\n", ratio);
   if (ratio <= 0.01f) {
     ratio = 0.0f;
+    ratio1 = 0.0f;
+    ratio2 = 0.0f;
     if ((lgfx::v1::millis() - last_lipsync_max_msec) > 500) {
       // 0.5秒以上無音の場合リップシンク上限をリセット
       last_lipsync_max_msec = lgfx::v1::millis();
@@ -137,6 +163,8 @@ void lipsync() {
         lipsync_max += 10.0f;
       }
       ratio = 1.3f;
+      ratio1 = 1.3f;
+      ratio2 = 1.3f;
     }
     last_lipsync_max_msec = lgfx::v1::millis(); // 無音でない場合は更新
   }
@@ -152,11 +180,13 @@ void lipsync() {
   avatar.setMouthOpenRatio(ratio);
 
 #ifdef USE_FASTLED
-   int led_level = (int)(ratio*(NUM_LEDS/2));
-   level_led(led_level, led_level);
+   int led_level1 = (int)(ratio1*(NUM_LEDS/2));
+   int led_level2 = (int)(ratio2*(NUM_LEDS/2));
+   level_led(led_level1, led_level2);
 #endif 
 }
 
+goblib::UnifiedButton unifiedButton;
 
 void setup()
 {
@@ -167,9 +197,7 @@ void setup()
   cfg.internal_mic = true;
 #endif  
   M5.begin(cfg);
-#if defined( ARDUINO_M5STACK_CORES3 )
   unifiedButton.begin(&M5.Display, goblib::UnifiedButton::appearance_t::transparent_all);
-#endif
   M5.Log.setLogLevel(m5::log_target_display, ESP_LOG_NONE);
   M5.Log.setLogLevel(m5::log_target_serial, ESP_LOG_INFO);
   M5.Log.setEnableColor(m5::log_target_serial, false);
@@ -235,6 +263,7 @@ void setup()
       break;
 
     case m5::board_t::board_M5StackCoreS3:
+    case m5::board_t::board_M5StackCoreS3SE:
       scale = 1.0f;
       position_top = 0;
       position_left = 0;
@@ -326,24 +355,45 @@ void loop()
 {
   M5.update();
 
-#if defined( ARDUINO_M5STACK_CORES3 )
   unifiedButton.update();
-#endif
-  if (M5.BtnA.wasPressed()) {
-    M5_LOGI("Push BtnA");
-    palette_index++;
-    if (palette_index > 5) {
-      palette_index = 0;
+  if (M5.getBoard() == m5::board_t::board_M5StackCoreS3 && display_rotation == 3){
+    // CoreS3は画面の反転で仮想ボタンの位置も変わってしまうため反転時はボタンCとして処理
+    if (M5.BtnC.wasHold() && rotation_flg == false) {
+//    M5.Display.setRotation(3);
+      display_rotation+=2;
+      if (display_rotation > 3){
+        display_rotation %= 4;
+      }
+      M5.Display.setRotation(display_rotation);
+      rotation_flg = true;
+    } else if (M5.BtnC.wasClicked()) {
+      M5_LOGI("Push BtnA");
+      palette_index++;
+      if (palette_index > 5) {
+        palette_index = 0;
+      }
+      avatar.setColorPalette(*cps[palette_index]);
     }
-    avatar.setColorPalette(*cps[palette_index]);
+  } else {
+    if (M5.BtnA.wasHold() && rotation_flg == false) {
+//    M5.Display.setRotation(3);
+      display_rotation+=2;
+      if (display_rotation > 3){
+        display_rotation %= 4;
+      }
+      M5.Display.setRotation(display_rotation);
+      rotation_flg = true;
+    } else if (M5.BtnA.wasClicked()) {
+      M5_LOGI("Push BtnA");
+      palette_index++;
+      if (palette_index > 5) {
+        palette_index = 0;
+      }
+      avatar.setColorPalette(*cps[palette_index]);
+    }
   }
-  if (M5.BtnA.wasDoubleClicked()) {
-//  M5.Display.setRotation(3);
-    display_rotation+=2;
-    if (display_rotation > 3){
-      display_rotation %= 4;
-    }
-    M5.Display.setRotation(display_rotation);
+  if (M5.BtnA.isReleased() && M5.BtnC.isReleased()){
+    rotation_flg = false;
   }
   if (M5.BtnPWR.wasClicked()) {
 #ifdef ARDUINO

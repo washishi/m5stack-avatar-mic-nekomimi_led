@@ -46,17 +46,33 @@ public:
     }
   }
 
-  void exec(const int16_t* in)
+  void exec(const int16_t* in, int8_t mode = 0) // mode 0:mono 1:LEFT 2:RIGHT
   {
     memset(_fi, 0, sizeof(_fi));
     for ( size_t j = 0 ; j < FFT_SIZE / 2 ; ++j )
     {
       float basej = 0.25 * (1.0-_wr[j]);
       size_t r = FFT_SIZE - j - 1;
-
-      /// perform han window and stereo to mono convert.
-      _fr[_br[j]] = basej * (in[j * 2] + in[j * 2 + 1]);
-      _fr[_br[r]] = basej * (in[r * 2] + in[r * 2 + 1]);
+      switch (mode)
+      {
+        case 0: // MONO
+          /// perform han window and stereo to mono convert.
+          _fr[_br[j]] = basej * (in[j * 2] + in[j * 2 + 1]);
+          _fr[_br[r]] = basej * (in[r * 2] + in[r * 2 + 1]);
+          break;
+        case 1: // LEFT
+          // L R L R L R ... の順でデータは並んでいる
+          // MONOの処理はLとR（マイク1つの場合は同じデータが入っている)を足しているのでLを2倍する
+          _fr[_br[j]] = basej * (in[j * 2] * 2);
+          _fr[_br[r]] = basej * (in[r * 2] * 2);
+          break;
+        case 2: // RIGHT
+          // L R L R L R ... の順でデータは並んでいる　
+          // MONOの処理はLとR（マイク1つの場合は同じデータが入っている)を足しているのでRを2倍する
+          _fr[_br[j]] = basej * (in[j * 2 + 1] * 2);
+          _fr[_br[r]] = basej * (in[r * 2 + 1] * 2);
+          break;
+      }
     }
 
     size_t s = 1;
