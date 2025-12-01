@@ -14,20 +14,12 @@ VSCode + PlatformIO
 
 # 使用ライブラリ等 
 詳細はplatformio.iniを見てください  
-<<<<<<< HEAD
 ・espressif32  
 ・M5Stack-Avatar@0.10.0  
 ・M5Unified@0.2.5  
 ・FastLED@3.9.16  
 ・gob_unifiedButton@0.1.5 (CoreS3,S3SEのみ)  
 ・M5Atomic-EchoBase@1.0.1 (AtomS3およびS3RでEchoBase利用時のみ)  
-=======
-・espressif32@6.5.0  
-・M5Stack-Avatar@0.9.2  
-・M5Unified@0.2.2  
-・FastLED@3.6.0  
-・gob_unifiedButton@0.1.5 (CoreS3,S3SEのみ)  
->>>>>>> 2b2b13a9c6a4ae0dcccdf0f3f1037ed5d6fc7ec0
 
 # 対応デバイス
 
@@ -80,29 +72,21 @@ VSCode + PlatformIO
   - env:M5StickC_PLUS2 を選択
   - Nekomimi LED は GROVE PORTに接続(G32)
 
-<<<<<<< HEAD
 - AtomS3 または AtomS3R + [NanoMIC](https://github.com/washishi/NanoMIC) または PDMマイクユニット
-=======
-- AtomS3 または AtomS3R + PDMマイクユニット
->>>>>>> 2b2b13a9c6a4ae0dcccdf0f3f1037ed5d6fc7ec0
   - env:M5AtomS3-PDM を選択
   - [NanoMIC](https://github.com/washishi/NanoMIC) または PDMマイクユニット を GROVE PORTに接続
   - Nekomimi LED は GND,+5V,G8 に何とかして接続してください
 
-<<<<<<< HEAD
 - AtomS3 または AtomS3R + [NanoMIC](https://github.com/washishi/NanoMIC) または PDMマイクユニット + NekomimiLED for Atom
   - env:M5AtomS3-PDM-LED38 を選択
   - [NanoMIC](https://github.com/washishi/NanoMIC) または PDMマイクユニット を GROVE PORTに接続
   - NekomimiLED for Atom を接続 
 
-=======
->>>>>>> 2b2b13a9c6a4ae0dcccdf0f3f1037ed5d6fc7ec0
 - AtomS3 または AtomS3R + [Atom_MIC](https://github.com/washishi/atom_mic)
   - env:M5AtomS3-AtomMIC を選択
   - Atom_MIC を接続
   - Nekomimi LED は Atom_MIC の GROVEコネクタに接続してください
 
-<<<<<<< HEAD
 - AtomS3 または AtomS3R + ATOMIC_ECHO_BASE
   - env:M5AtomS3-ATOMIC_ECHO_BASE を選択
   - ATOMIC_ECHO_BASE を接続
@@ -114,9 +98,6 @@ VSCode + PlatformIO
   - ATOMIC_ECHO_BASE を接続
 
 - M5Dial + [NanoMIC](https://github.com/washishi/NanoMIC) または PDMマイクユニット(PortA)
-=======
-- M5Dial + PDMマイクユニット(PortA)
->>>>>>> 2b2b13a9c6a4ae0dcccdf0f3f1037ed5d6fc7ec0
   - env:M5Dial-PDM_PortA を選択
   - [NanoMIC](https://github.com/washishi/NanoMIC) または PDMマイクユニット を PortAに接続
   - Nekomimi LED は PortBに接続(O端子を利用、G2)  
