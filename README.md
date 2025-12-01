@@ -1,8 +1,8 @@
 
-# m5stack-avatar-mic-nekomimi
+# m5stack-avatar-mic-nekomimi_led
 [Nekomimi LED](https://github.com/washishi/nekomimi_led) のサンプルプログラムです  
 音に合わせてAvatarが口パクしたり、傾いたりすると共にNekomimi LEDが音量に応じて光ります  
-またボタンAを押すと画面の色が変わります、長押しすると上下が反転します(再度長押しで戻ります) 
+またボタンAを押すと画面の色が変わります、長押しすると表示方向が変化します(繰り返し行うと元に戻ります) 
 なおｽﾀｯｸﾁｬﾝに入れてもサーボの制御はしていないためサーボは動きません  
 
 ※本プログラムは Takao Akaki (mongonta0716) さんの [m5stack-avatar-mic](https://github.com/mongonta0716/m5stack-avatar-mic) を改変したものです  
@@ -15,10 +15,10 @@ VSCode + PlatformIO
 # 使用ライブラリ等 
 詳細はplatformio.iniを見てください  
 ・espressif32@6.5.0  
-・M5Stack-Avatar@0.9.2  
-・M5Unified@0.1.13  
-・FastLED@3.6.0  
-・gob_unifiedButton@0.1.5
+・M5Stack-Avatar@0.9.2
+・M5Unified@0.2.2
+・FastLED@3.6.0
+・gob_unifiedButton@0.1.5 (CoreS3,S3SEのみ)
 
 # 対応デバイス
 
@@ -71,10 +71,15 @@ VSCode + PlatformIO
   - env:M5StickC_PLUS2 を選択
   - Nekomimi LED は GROVE PORTに接続(G32)
 
-- AtomS3 + PDMマイクユニット
+- AtomS3 または AtomS3R + PDMマイクユニット
   - env:M5AtomS3-PDM を選択
   - PDMマイクユニット を GROVE PORTに接続
   - Nekomimi LED は GND,+5V,G8 に何とかして接続してください
+
+- AtomS3 または AtomS3R + [Atom_MIC](https://github.com/washishi/atom_mic)
+  - env:M5AtomS3-AtomMIC を選択
+  - Atom_MIC を接続
+  - Nekomimi LED は Atom_MIC の GROVEコネクタに接続してください
 
 - M5Dial + PDMマイクユニット(PortA)
   - env:M5Dial-PDM_PortA を選択

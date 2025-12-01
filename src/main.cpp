@@ -5,7 +5,9 @@
 #include <Avatar.h>
 #include "fft.hpp"
 #include <cinttypes>
+#ifdef ARDUINO_M5STACK_CORES3
 #include <gob_unifiedButton.hpp>
+#endif
 #define USE_MIC
 
 #define USE_FASTLED
@@ -185,8 +187,11 @@ void lipsync() {
    level_led(led_level1, led_level2);
 #endif 
 }
-
+#ifdef ARDUINO_M5STACK_CORES3
 goblib::UnifiedButton unifiedButton;
+#endif
+
+uint8_t rotation_position = 2; // 変更可能なディスプレイ向きの数 2 or 4
 
 void setup()
 {
@@ -197,7 +202,9 @@ void setup()
   cfg.internal_mic = true;
 #endif  
   M5.begin(cfg);
+#ifdef ARDUINO_M5STACK_CORES3
   unifiedButton.begin(&M5.Display, goblib::UnifiedButton::appearance_t::transparent_all);
+#endif
   M5.Log.setLogLevel(m5::log_target_display, ESP_LOG_NONE);
   M5.Log.setLogLevel(m5::log_target_serial, ESP_LOG_INFO);
   M5.Log.setEnableColor(m5::log_target_serial, false);
@@ -211,17 +218,25 @@ void setup()
   auto mic_cfg = M5.Mic.config();
     switch (M5.getBoard()) {
     case m5::board_t::board_M5AtomS3:
+    case m5::board_t::board_M5AtomS3R:
       first_cps = 4;
       scale = 0.55f;
       position_top =  -60;
       position_left = -95;
-      display_rotation = 2;
+      display_rotation = 0;
+      rotation_position = 4;
       // M5AtomS3は外部マイク(PDMUnit)なので設定を行う。
       mic_cfg.sample_rate = 16000;
       //mic_cfg.dma_buf_len = 256;
       //mic_cfg.dma_buf_count = 3;
+#if defined( PDM_PORTA )
       mic_cfg.pin_ws = 1;
       mic_cfg.pin_data_in = 2;
+#endif
+#if defined( PDM_GPIO5_6 )
+      mic_cfg.pin_ws = 5;
+      mic_cfg.pin_data_in = 6;
+#endif
       M5.Mic.config(mic_cfg);
       break;
 
@@ -354,8 +369,9 @@ uint32_t count = 0;
 void loop()
 {
   M5.update();
-
+#ifdef ARDUINO_M5STACK_CORES3
   unifiedButton.update();
+#endif
   if (M5.getBoard() == m5::board_t::board_M5StackCoreS3 && display_rotation == 3){
     // CoreS3は画面の反転で仮想ボタンの位置も変わってしまうため反転時はボタンCとして処理
     if (M5.BtnC.wasHold() && rotation_flg == false) {
@@ -377,7 +393,10 @@ void loop()
   } else {
     if (M5.BtnA.wasHold() && rotation_flg == false) {
 //    M5.Display.setRotation(3);
-      display_rotation+=2;
+      display_rotation++;
+      if (rotation_position == 2){
+        display_rotation++;
+      }
       if (display_rotation > 3){
         display_rotation %= 4;
       }
