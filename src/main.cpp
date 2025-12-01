@@ -5,18 +5,17 @@
 #include <Avatar.h>
 #include "fft.hpp"
 #include <cinttypes>
+
 #ifdef ARDUINO_M5STACK_CORES3
 #include <gob_unifiedButton.hpp>
 #endif
-<<<<<<< HEAD
+
 #ifdef ECHO_BASE
 #include <M5EchoBase.h>  // M5Unifyedでなんかマイクがうまく動かないので暫定で利用
 M5EchoBase echobase(I2S_NUM_0);
 #endif
-=======
->>>>>>> 2b2b13a9c6a4ae0dcccdf0f3f1037ed5d6fc7ec0
-#define USE_MIC
 
+#define USE_MIC
 #define USE_FASTLED
 // LEDをレベルメータとして使用する;
 #ifdef USE_FASTLED
@@ -237,19 +236,11 @@ void setup()
       position_left = -95;
       display_rotation = 0;
       rotation_position = 4;
-<<<<<<< HEAD
       // M5AtomS3は外部マイク(PDMUnit/ECHO BASE)なので設定を行う。
       mic_cfg.sample_rate = 16000;
       //mic_cfg.dma_buf_len = 256;
       //mic_cfg.dma_buf_count = 3;
 #if defined( PDM_PORTA ) 
-=======
-      // M5AtomS3は外部マイク(PDMUnit)なので設定を行う。
-      mic_cfg.sample_rate = 16000;
-      //mic_cfg.dma_buf_len = 256;
-      //mic_cfg.dma_buf_count = 3;
-#if defined( PDM_PORTA )
->>>>>>> 2b2b13a9c6a4ae0dcccdf0f3f1037ed5d6fc7ec0
       mic_cfg.pin_ws = 1;
       mic_cfg.pin_data_in = 2;
 #endif
@@ -350,7 +341,6 @@ case m5::board_t::board_M5StickC:
       M5.Mic.config(mic_cfg);
       break;
 
-      
     defalut:
       M5.Log.println("Invalid board.");
       break;
