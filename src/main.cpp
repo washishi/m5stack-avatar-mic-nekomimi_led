@@ -8,6 +8,10 @@
 #ifdef ARDUINO_M5STACK_CORES3
 #include <gob_unifiedButton.hpp>
 #endif
+#ifdef ECHO_BASE
+#include <M5EchoBase.h>  // M5Unifyedでなんかマイクがうまく動かないので暫定で利用
+M5EchoBase echobase(I2S_NUM_0);
+#endif
 #define USE_MIC
 
 #define USE_FASTLED
@@ -129,7 +133,12 @@ void lipsync() {
     }
     break;
   default:
+#ifdef ECHO_BASE
+    size_t bytes_read = 0;
+    if (i2s_read(I2S_NUM_0, rec_data, WAVE_SIZE, &bytes_read, echobase.getDuration(WAVE_SIZE)) == ESP_OK){
+#else
     if ( M5.Mic.record(rec_data, WAVE_SIZE, record_samplerate)) {
+#endif
       fft.exec(rec_data);
       for (size_t bx=5;bx<=60;++bx) {
         int32_t f = fft.get(bx);
@@ -196,7 +205,7 @@ uint8_t rotation_position = 2; // 変更可能なディスプレイ向きの数 
 void setup()
 {
   auto cfg = M5.config();
-#if defined( PDM_PORTA )||( PDM_I2S )
+#if defined( PDM_PORTA )||( PDM_I2S )||( ECHO_BASE )
   cfg.internal_mic = false;
 #else
   cfg.internal_mic = true;
@@ -225,22 +234,28 @@ void setup()
       position_left = -95;
       display_rotation = 0;
       rotation_position = 4;
-      // M5AtomS3は外部マイク(PDMUnit)なので設定を行う。
+      // M5AtomS3は外部マイク(PDMUnit/ECHO BASE)なので設定を行う。
       mic_cfg.sample_rate = 16000;
       //mic_cfg.dma_buf_len = 256;
       //mic_cfg.dma_buf_count = 3;
-#if defined( PDM_PORTA )
+#if defined( PDM_PORTA ) 
       mic_cfg.pin_ws = 1;
       mic_cfg.pin_data_in = 2;
+      M5.Mic.config(mic_cfg);
 #endif
-#if defined( PDM_GPIO5_6 )
+#if defined( PDM_GPIO5_6 ) //Atom Mic
       mic_cfg.pin_ws = 5;
       mic_cfg.pin_data_in = 6;
-#endif
       M5.Mic.config(mic_cfg);
+#endif
+#if defined( ECHO_BASE )
+      echobase.init(16000 /*Sample Rate*/, 38 /*I2C SDA*/, 39 /*I2C SCL*/, 7 /*I2S DIN*/, 6 /*I2S WS*/, 5 /*I2S DOUT*/, 8 /*I2S BCK*/, Wire);
+      i2s_set_clk(I2S_NUM_0,16000,I2S_BITS_PER_CHAN_16BIT,I2S_CHANNEL_MONO);  // EchoBaseのライブラリのチャンネル形式が異なるため変更
+      echobase.setMicGain(ES8311_MIC_GAIN_6DB);  // Set microphone gain to 6dB.
+      Wire.end(); // I2Cのピン(GPIO38)をFastLEDで利用するためI2Cを停止
+#endif
       break;
-
-    case m5::board_t::board_M5StickC:
+case m5::board_t::board_M5StickC:
       first_cps = 1;
       scale = 0.6f;
       position_top = -80;
@@ -269,6 +284,7 @@ void setup()
       position_top = 0;
       position_left = 0;
       display_rotation = 1;
+      first_cps = 3;
       // 外部マイク設定
 #if defined( PDM_PORTA )
       mic_cfg.pin_ws = 33;
@@ -283,6 +299,7 @@ void setup()
       position_top = 0;
       position_left = 0;
       display_rotation = 1;
+      first_cps = 3;
       break;
 
     case m5::board_t::board_M5Stack:
@@ -290,6 +307,7 @@ void setup()
       position_top = 0;
       position_left = 0;
       display_rotation = 1;
+      first_cps = 3;
       // 外部マイク設定
 #if defined( PDM_PORTA )
       M5.In_I2C.release();
@@ -324,10 +342,11 @@ void setup()
 #ifndef SDL_h_
   rec_data = (typeof(rec_data))heap_caps_malloc(WAVE_SIZE * sizeof(int16_t), MALLOC_CAP_8BIT);
   memset(rec_data, 0 , WAVE_SIZE * sizeof(int16_t));
+  M5.Speaker.end();
+#endif
+#ifndef ECHO_BASE
   M5.Mic.begin();
 #endif
-  M5.Speaker.end();
-
   M5.Display.setRotation(display_rotation);
   avatar.setScale(scale);
   avatar.setPosition(position_top, position_left);
@@ -355,6 +374,7 @@ void setup()
   last_rotation_msec = lgfx::v1::millis();
 
 #ifdef USE_FASTLED
+  digitalWrite(LED_GPIO,LOW); // 1つ目のLEDが正常に動かないことがあるため追加
   FastLED.addLeds<SK6812, LED_GPIO, GRB>(leds, NUM_LEDS);  // GRB ordering is typical
   FastLED.setBrightness(10);
   level_led(NUM_LEDS/2, NUM_LEDS/2);
