@@ -243,11 +243,6 @@ void setup()
 #if defined( PDM_PORTA ) 
       mic_cfg.pin_ws = 1;
       mic_cfg.pin_data_in = 2;
-#endif
-#if defined( PDM_GPIO5_6 )
-      mic_cfg.pin_ws = 5;
-      mic_cfg.pin_data_in = 6;
-#endif
       M5.Mic.config(mic_cfg);
 #endif
 #if defined( PDM_GPIO5_6 ) //Atom Mic
